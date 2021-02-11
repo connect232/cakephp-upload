@@ -33,7 +33,7 @@ class UploadBehavior extends Behavior
             } else {
                 $file = new File($data[$index]['tmp_name']);
                 $file->info = pathinfo($data[$index]['name']);
-                $file->name = $data[$index]['name'];
+                $file->name = strtolower($data[$index]['name']);
 
                 // slugify filename before appending timestamp to filename
                 $file->name = $data[$index] = Text::slug($file->name()) . '-' . time() . '.' . $file->ext();
