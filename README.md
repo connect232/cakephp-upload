@@ -27,5 +27,5 @@ $this->Form->create($foo, ['type' =>' file']);
 ```
 Modify your field's type to file
 ```
-$this->Form->create($foo, ['type' => 'file']);
+$this->Form->control($foo, ['type' => 'file']);
 ```
