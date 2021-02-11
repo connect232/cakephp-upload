@@ -15,9 +15,8 @@ $this->addPlugin('Upload');
 In your model `initialize()`:
 ```
 $this->addBehavior('Upload.Upload', [
-		'your_field_name' => [
-				'path' => 'directory-to-save-file-to'
-			]
+	'your_field_name' => [
+			'path' => 'directory-to-save-file-to'
 		]
 	]
 );
