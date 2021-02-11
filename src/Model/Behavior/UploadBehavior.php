@@ -3,11 +3,13 @@
 namespace Upload\Model\Behavior;
 
 use ArrayObject;
+use Cake\Database\Type;
 use Cake\Datasource\EntityInterface;
 use Cake\Event\Event;
 use Cake\Filesystem\File;
 use Cake\ORM\Behavior;
 use Cake\Utility\Text;
+use Upload\Database\Type\UploadedFileType;
 
 class UploadBehavior extends Behavior
 {
@@ -16,6 +18,16 @@ class UploadBehavior extends Behavior
     public function initialize(array $config)
     {
         $this->fields = $config;
+
+        // Set column type for configured fields (UploadedFileType)
+        Type::map('uploadedFile', UploadedFileType::class);
+        $schema = $this->_table->getSchema();
+
+        foreach ($this->fields as $index => $field) {
+            $schema->setColumnType($index, 'uploadedFile');
+        }
+
+        $this->_table->setSchema($schema);
     }
 
     /**
@@ -30,16 +42,6 @@ class UploadBehavior extends Behavior
         foreach ($this->fields as $index => $field) {
             if (!$data[$index]['tmp_name']) {
                 unset($data[$index]);
-            } else {
-                $file = new File($data[$index]['tmp_name']);
-                $file->info = pathinfo($data[$index]['name']);
-                $file->name = strtolower($data[$index]['name']);
-
-                // slugify filename before appending timestamp to filename
-                $file->name = $data[$index] = Text::slug($file->name()) . '-' . time() . '.' . $file->ext();
-
-                // add file to destination folder
-                $file->copy(WWW_ROOT . $field['path'] . DS . $file->name);
             }
         }
     }
@@ -51,17 +53,23 @@ class UploadBehavior extends Behavior
      * @param Cake\Datasource\EntityInterface $entity
      * @param ArrayObject $options
      */
-    public function afterSave(Event $event, EntityInterface $entity, ArrayObject $options)
+    public function beforeSave(Event $event, EntityInterface $entity, ArrayObject $options)
     {
         // delete old file (edit only) if entity saves successfully, else delete new file
         foreach ($this->fields as $index => $field) {
             if ($entity->isDirty($index)) {
-                if (!$entity->hasErrors()) {
-                    if (!$entity->isNew()) {
-                        $this->deleteFile($field['path'], $entity->getOriginal($index));
-                    }
-                } else {
-                    $this->deleteFile($field['path'], $entity->$index);
+                $file = new File($entity->file['tmp_name']);
+                $file->info = pathinfo($entity->file['name']);
+                $file->name = strtolower($entity->file['name']);
+
+                // slugify filename before appending timestamp to filename
+                $entity->file = Text::slug($file->name()) . '-' . time() . '.' . $file->ext();
+
+                // add file to destination folder
+                $file->copy(WWW_ROOT . $field['path'] . DS . $entity->file);
+
+                if (!$entity->isNew()) {
+                    $this->deleteFile($field['path'], $entity->getOriginal($index));
                 }
             }
         }
