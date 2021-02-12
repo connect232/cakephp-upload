@@ -21,6 +21,10 @@ $this->addBehavior('Upload.Upload', [
 	]
 );
 ```
+If you have baked your model remove the scalar validation:
+```
+$validator->scalar('youtube');
+```
 Modify your form to accept files
 ```
 $this->Form->create($foo, ['type' =>' file']);
