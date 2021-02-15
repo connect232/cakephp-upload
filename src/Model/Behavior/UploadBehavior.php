@@ -8,6 +8,7 @@ use Cake\Datasource\EntityInterface;
 use Cake\Event\Event;
 use Cake\Filesystem\File;
 use Cake\ORM\Behavior;
+use Cake\ORM\RulesChecker;
 use Cake\Utility\Text;
 use Upload\Database\Type\UploadedFileType;
 
@@ -31,7 +32,7 @@ class UploadBehavior extends Behavior
     }
 
     /**
-     * Slug and timestamps filenames before adding to destination folder.
+     * Unsets file data if no file has been uploaded.
      *
      * @param Cake\Event\Event $event
      * @param ArrayObject $data request data
@@ -47,7 +48,29 @@ class UploadBehavior extends Behavior
     }
 
     /**
-     * Deletes old files (edit only) if entity saves successfully, else deletes new files.
+     * Check if a file has been uploaded on all creation of new entities.
+     *
+     * @param Cake\Event\Event $event
+     * @param RulesChecker $rules table rules
+     */
+    public function buildRules(Event $event, RulesChecker $rules)
+    {
+        foreach ($this->fields as $index => $field) {
+            $rules->addCreate(function ($entity, $options) use ($index) {
+                    return (bool) $entity->$index['tmp_name'];
+                },
+                'fileAdded',
+                [
+                    'errorField' => $index,
+                    'message' => 'Please add a file'
+                ]
+            );
+        }
+    }
+
+    /**
+     * Slug and timestamps filenames before adding to destination folder.
+     * Deletes old files (edit only) if entity saves successfully.
      *
      * @param Cake\Event\Event $event
      * @param Cake\Datasource\EntityInterface $entity
@@ -55,7 +78,6 @@ class UploadBehavior extends Behavior
      */
     public function beforeSave(Event $event, EntityInterface $entity, ArrayObject $options)
     {
-        // delete old file (edit only) if entity saves successfully, else delete new file
         foreach ($this->fields as $index => $field) {
             if ($entity->isDirty($index)) {
                 $file = new File($entity->file['tmp_name']);
