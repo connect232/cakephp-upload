@@ -16,14 +16,14 @@ In your model `initialize()`:
 ```
 $this->addBehavior('Upload.Upload', [
 	'your_field_name' => [
-			'path' => 'directory-to-save-file-to'
+			'path' => 'directory/to/save/file/to'
 		]
 	]
 );
 ```
 If you have baked your model remove the scalar validation:
 ```
-$validator->scalar('youtube');
+$validator->scalar('foo');
 ```
 Modify your form to accept files
 ```
