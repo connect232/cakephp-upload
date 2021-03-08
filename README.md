@@ -27,7 +27,7 @@ $validator->scalar('foo');
 ```
 Modify your form to accept files
 ```
-$this->Form->create($foo, ['type' =>' file']);
+$this->Form->create($foo, ['type' => 'file']);
 ```
 Modify your field's type to file
 ```
