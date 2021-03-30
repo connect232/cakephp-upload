@@ -6,7 +6,6 @@ use ArrayObject;
 use Cake\Database\Type;
 use Cake\Datasource\EntityInterface;
 use Cake\Event\Event;
-use Cake\Filesystem\File;
 use Cake\ORM\Behavior;
 use Cake\ORM\RulesChecker;
 use Cake\Utility\Text;
@@ -16,7 +15,7 @@ class UploadBehavior extends Behavior
 {
     protected $fields;
 
-    public function initialize(array $config)
+    public function initialize(array $config): void
     {
         $this->fields = $config;
 
@@ -41,7 +40,7 @@ class UploadBehavior extends Behavior
     public function beforeMarshal(Event $event, ArrayObject $data, ArrayObject $options)
     {
         foreach ($this->fields as $index => $field) {
-            if (!$data[$index]['tmp_name']) {
+            if (!$data[$index]->getClientFilename()) {
                 unset($data[$index]);
             }
         }
@@ -57,7 +56,7 @@ class UploadBehavior extends Behavior
     {
         foreach ($this->fields as $index => $field) {
             $rules->addCreate(function ($entity, $options) use ($index) {
-                    return (bool) $entity->$index['tmp_name'];
+                    return (bool) $entity->$index->getClientFilename();
                 },
                 'fileAdded',
                 [
@@ -80,15 +79,14 @@ class UploadBehavior extends Behavior
     {
         foreach ($this->fields as $index => $field) {
             if ($entity->isDirty($index)) {
-                $file = new File($entity->file['tmp_name']);
-                $file->info = pathinfo($entity->file['name']);
-                $file->name = strtolower($entity->file['name']);
+                $file = $entity->file;
+                $ext = pathinfo($file->getClientFilename())['extension'];
 
                 // slugify filename before appending timestamp to filename
-                $entity->file = Text::slug($file->name()) . '-' . time() . '.' . $file->ext();
+                $entity->file = Text::slug(strtolower($file->getClientFilename())) . '-' . time() . '.' . $ext;
 
                 // add file to destination folder
-                $file->copy(WWW_ROOT . $field['path'] . DS . $entity->file);
+                $file->moveTo(WWW_ROOT . $field['path'] . DS . $entity->file);
 
                 if (!$entity->isNew()) {
                     $this->deleteFile($field['path'], $entity->getOriginal($index));
@@ -120,9 +118,8 @@ class UploadBehavior extends Behavior
      * @return bool Success
      */
     private function deleteFile(string $path, string $filename) {
-        if ($filename) {
-            $file = new File(WWW_ROOT . $path . DS . $filename);
-            return $file->delete();
+        if (file_exists(WWW_ROOT . $path . DS . $filename)) {
+            return unlink(WWW_ROOT . $path . DS . $filename);
         } else {
             return false;
         }
