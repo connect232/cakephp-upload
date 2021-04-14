@@ -88,7 +88,7 @@ class UploadBehavior extends Behavior
                 // add file to destination folder
                 $file->moveTo(WWW_ROOT . $field['path'] . DS . $entity->file);
 
-                if (!$entity->isNew()) {
+                if (!$entity->isNew() && is_string($entity->getOriginal($index))) {
                     $this->deleteFile($field['path'], $entity->getOriginal($index));
                 }
             }
@@ -118,7 +118,7 @@ class UploadBehavior extends Behavior
      * @return bool Success
      */
     private function deleteFile(string $path, string $filename) {
-        if (file_exists(WWW_ROOT . $path . DS . $filename)) {
+        if (is_file(WWW_ROOT . $path . DS . $filename)) {
             return unlink(WWW_ROOT . $path . DS . $filename);
         } else {
             return false;
