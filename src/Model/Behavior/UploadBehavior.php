@@ -80,10 +80,10 @@ class UploadBehavior extends Behavior
         foreach ($this->fields as $index => $field) {
             if ($entity->isDirty($index)) {
                 $file = $entity->$index;
-                $ext = pathinfo($file->getClientFilename())['extension'];
+                $fileInfo = pathinfo($file->getClientFilename());
 
                 // slugify filename before appending timestamp to filename
-                $entity->$index = Text::slug(strtolower($file->getClientFilename())) . '-' . time() . '.' . $ext;
+                $entity->$index = Text::slug(strtolower($fileInfo['filename'])) . '-' . time() . '.' . $fileInfo['extension'];
 
                 // add file to destination folder
                 $file->moveTo(WWW_ROOT . $field['path'] . DS . $entity->$index);
