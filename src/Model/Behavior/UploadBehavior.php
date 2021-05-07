@@ -40,8 +40,10 @@ class UploadBehavior extends Behavior
     public function beforeMarshal(Event $event, ArrayObject $data, ArrayObject $options)
     {
         foreach ($this->fields as $index => $field) {
-            if (!$data[$index]->getClientFilename()) {
-                unset($data[$index]);
+            if (isset($data[$index])) {
+                if (!$data[$index]->getClientFilename()) {
+                    unset($data[$index]);
+                }
             }
         }
     }
